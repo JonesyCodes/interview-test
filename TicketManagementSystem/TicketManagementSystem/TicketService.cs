@@ -1,127 +1,125 @@
-﻿using System;
-using System.Configuration;
+﻿using EmailService;
+using System;
 using System.IO;
 using System.Text.Json;
-using EmailService;
+using TicketManagementSystem.CustomExceptions;
+using TicketManagementSystem.Interfaces;
+using TicketManagementSystem.Models;
+using TicketManagementSystem.Repositories;
 
 namespace TicketManagementSystem
 {
     public class TicketService
     {
-        public int CreateTicket(string t, Priority p, string assignedTo, string desc, DateTime d, bool isPayingCustomer)
+        private readonly IUserRepository _userRepository;
+
+        public TicketService() : this(new UserRepository()) { }
+
+        public TicketService(IUserRepository userRepository)
         {
-            // Check if t or desc are null or if they are invalid and throw exception
-            if (t == null || desc == null || t == "" || desc == "")
-            {
-                throw new InvalidTicketException("Title or description were null");
-            }
+            _userRepository = userRepository;
+        }
 
-            User user = null;
-            using (var ur = new UserRepository())
-            {
-                if (assignedTo != null)
-                {
-                    user = ur.GetUser(assignedTo);
-                }
-            }
-
-            if (user == null)
-            {
-                throw new UnknownUserException("User " + assignedTo + " not found");
-            }
-
+        public int CreateTicket(string title, Priority priority, string assignedTo, string description, DateTime creationDateTime, bool isPayingCustomer)
+        {
+            User accountManager = null;
             var priorityRaised = false;
-            if (d < DateTime.UtcNow - TimeSpan.FromHours(1))
+            double price = 0;
+
+            if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(description))
             {
-                if (p == Priority.Low)
-                {
-                    p = Priority.Medium;
-                    priorityRaised = true;
-                }
-                else if (p == Priority.Medium)
-                {
-                    p = Priority.High;
-                    priorityRaised = true;
-                }
+                throw new InvalidTicketException("Title or description were null or empty");
             }
 
-            if ((t.Contains("Crash") || t.Contains("Important") || t.Contains("Failure")) && !priorityRaised)
+
+            var user = _userRepository.GetUser(assignedTo ?? string.Empty);
+
+
+            if (user is null)
             {
-                if (p == Priority.Low)
-                {
-                    p = Priority.Medium;
-                }
-                else if (p == Priority.Medium)
-                {
-                    p = Priority.High;
-                }
+                throw new UnknownUserException($"User {assignedTo} not found");
             }
 
-            if (p == Priority.High)
+            if (creationDateTime < DateTime.UtcNow.AddHours(-1))
+            {
+                priority = RaisePriorityLevel(priority, ref priorityRaised);
+            }
+
+            if (!priorityRaised &&
+                (
+                title.Contains("Crash") ||
+                title.Contains("Important") ||
+                title.Contains("Failure")
+                ))
+            {
+                priority = RaisePriorityLevel(priority, ref priorityRaised);
+            }
+
+            if (priority == Priority.High)
             {
                 var emailService = new EmailServiceProxy();
-                emailService.SendEmailToAdministrator(t, assignedTo);
+                emailService.SendEmailToAdministrator(title, assignedTo);
             }
 
-            double price = 0;
-            User accountManager = null;
             if (isPayingCustomer)
             {
                 // Only paid customers have an account manager.
-                accountManager = new UserRepository().GetAccountManager();
-                if (p == Priority.High)
-                {
-                    price = 100;
-                }
-                else
-                {
-                    price = 50;
-                }
+
+                accountManager = _userRepository.GetAccountManager();
+
+
+                price = priority == Priority.High ? 100 : 50;
             }
 
             var ticket = new Ticket()
             {
-                Title = t,
+                Title = title,
                 AssignedUser = user,
-                Priority = p,
-                Description = desc,
-                Created = d,
+                Priority = priority,
+                Description = description,
+                Created = creationDateTime,
                 PriceDollars = price,
                 AccountManager = accountManager
             };
 
-            var id = TicketRepository.CreateTicket(ticket);
-
-            // Return the id
-            return id;
+            return TicketRepository.CreateTicket(ticket);
         }
 
         public void AssignTicket(int id, string username)
         {
-            User user = null;
-            using (var ur = new UserRepository())
-            {
-                if (username != null)
-                {
-                    user = ur.GetUser(username);
-                }
-            }
 
-            if (user == null)
+            var user = _userRepository.GetUser(username ?? string.Empty);
+
+            if (user is null)
             {
                 throw new UnknownUserException("User not found");
             }
 
             var ticket = TicketRepository.GetTicket(id);
 
-            if (ticket == null)
+            if (ticket is null)
             {
-                throw new ApplicationException("No ticket found for id " + id);
+                throw new ApplicationException($"No ticket found for id {id}");
             }
 
             ticket.AssignedUser = user;
 
             TicketRepository.UpdateTicket(ticket);
+        }
+
+        private static Priority RaisePriorityLevel(Priority currentPriority, ref bool priorityRaised)
+        {
+            switch (currentPriority)
+            {
+                case Priority.Low:
+                    priorityRaised = true;
+                    return Priority.Medium;
+                case Priority.Medium:
+                    priorityRaised = true;
+                    return Priority.High;
+                default:
+                    return currentPriority;
+            }
         }
 
         private void WriteTicketToFile(Ticket ticket)
