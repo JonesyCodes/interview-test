@@ -1,27 +1,29 @@
 ﻿using System;
 using System.Data.SqlClient;
+using TicketManagementSystem.Interfaces;
+using TicketManagementSystem.Models;
 
-namespace TicketManagementSystem
+namespace TicketManagementSystem.Repositories
 {
-    public class UserRepository : IDisposable
+    public class UserRepository : IUserRepository, IDisposable
     {
-        private SqlConnection connection;
-        
+        private readonly SqlConnection _connection;
+
         public UserRepository()
         {
-            var connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["database"].ConnectionString; 
-            connection = new SqlConnection(connectionString);
+            var connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["database"].ConnectionString;
+            _connection = new SqlConnection(connectionString);
         }
-        
+
         public User GetUser(string username)
         {
             // Assume this method does not need to change and is connected to a database with users populated.
             try
             {
                 string sql = "SELECT TOP 1 FROM Users u WHERE u.Username == @p1";
-                connection.Open();
+                _connection.Open();
 
-                var command = new SqlCommand(sql, connection)
+                var command = new SqlCommand(sql, _connection)
                 {
                     CommandType = System.Data.CommandType.Text,
                 };
@@ -36,7 +38,10 @@ namespace TicketManagementSystem
             }
             finally
             {
-                connection.Close();
+                if (_connection != null )
+                {
+                    Dispose();
+                }
             }
         }
 
@@ -49,7 +54,7 @@ namespace TicketManagementSystem
         public void Dispose()
         {
             // Assume this method does not need to change.
-            connection.Dispose();
+            _connection.Dispose();
         }
     }
 }

@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using TicketManagementSystem.Models;
 
-namespace TicketManagementSystem
+namespace TicketManagementSystem.Repositories
 {
     public static class TicketRepository
     {

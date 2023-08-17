@@ -1,5 +1,7 @@
 ﻿using System;
-namespace TicketManagementSystem
+using TicketManagementSystem.Services;
+
+namespace TicketManagementSystem.Models
 {
     public class Ticket
     {
