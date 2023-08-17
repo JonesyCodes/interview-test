@@ -7,15 +7,15 @@ using TicketManagementSystem.Interfaces;
 using TicketManagementSystem.Models;
 using TicketManagementSystem.Repositories;
 
-namespace TicketManagementSystem.Services
+namespace TicketManagementSystem
 {
     public class TicketService
     {
         private readonly IUserRepository _userRepository;
 
-        public TicketService() : this( new UserRepository() ) { }
-        
-        public TicketService( IUserRepository userRepository )
+        public TicketService() : this(new UserRepository()) { }
+
+        public TicketService(IUserRepository userRepository)
         {
             _userRepository = userRepository;
         }

@@ -4,7 +4,6 @@ using System;
 using TicketManagementSystem.CustomExceptions;
 using TicketManagementSystem.Interfaces;
 using TicketManagementSystem.Models;
-using TicketManagementSystem.Services;
 
 namespace TicketManagementSystem.Tests
 {

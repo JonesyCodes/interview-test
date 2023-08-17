@@ -1,5 +1,4 @@
 ﻿using System;
-using TicketManagementSystem.Services;
 
 namespace TicketManagementSystem.Models
 {
