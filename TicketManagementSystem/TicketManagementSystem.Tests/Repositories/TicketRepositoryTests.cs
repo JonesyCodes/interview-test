@@ -15,7 +15,7 @@ namespace TicketManagementSystem.Tests.Repositories
 
         [Test]
         [Ignore("Ignore test")]
-        public void CreateTicket_Adds_Ticket_And_Returns_New_Ticket_With_Incremented_Id() 
+        public void CreateTicket_Adds_Ticket_And_Returns_New_Ticket_With_Incremented_Id()
         {
             var firstTicketId = TicketRepository.CreateTicket(_tickets[0]);
             var secondTicketId = TicketRepository.CreateTicket(_tickets[1]);

@@ -50,7 +50,7 @@ namespace TicketManagementSystem.Tests
                 description: "description",
                 creationDateTime: DateTime.Now,
                 isPayingCustomer: true
-                ), 
+                ),
                 Throws.TypeOf<InvalidTicketException>());
         }
 

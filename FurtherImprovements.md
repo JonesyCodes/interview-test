@@ -22,4 +22,4 @@ If some task restrictions were eliminated there is potential for further improve
 
 ## Notes
 
-* Unit Tests for `TicketRepository` have been disabled due to static field persisting between tests. 
+* Unit Tests for `TicketRepository` have been disabled due to static field persisting between tests.
